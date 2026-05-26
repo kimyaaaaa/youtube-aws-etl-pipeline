@@ -1,432 +1,259 @@
-\# YouTube AWS ETL Pipeline
+# YouTube AWS ETL Pipeline
 
+End-to-end cloud ETL pipeline built for processing and analyzing YouTube trending video data using AWS services, Apache Airflow orchestration, Spark transformations, Athena analytics, and Power BI visualization.
 
+This project was designed with a focus on scalability, efficiency, and incremental data processing rather than simply executing full ETL jobs repeatedly.
 
-End-to-end cloud ETL pipeline for processing and analyzing YouTube trending video data using AWS services, Apache Airflow orchestration, Spark transformations, Athena analytics, and Power BI visualization.
+---
 
+## Project Goal
 
+The objective of this project is to build a scalable data pipeline that can:
 
-\---
+* Detect new incoming data automatically
+* Process only newly arrived files
+* Prevent duplicate records from entering the warehouse
+* Avoid unnecessary ETL execution
+* Reduce processing overhead and cloud resource consumption
+* Support future data growth with minimal modifications
 
+---
 
+## Technologies Used
 
-\## Project Overview
+### Cloud Services
 
+* Amazon S3 (Data Lake Storage)
+* AWS Glue ETL Jobs
+* AWS Glue Crawlers
+* AWS Glue Data Catalog
+* AWS Athena
 
+### Data Processing
 
-This project builds a complete data pipeline that:
+* Apache Spark
+* Python
+* SQL
 
+### Orchestration
 
+* Apache Airflow running on a Virtual Machine (EC2)
 
-\- Detects new files automatically
+### Visualization
 
-\- Cleans and transforms raw YouTube data
+* Power BI
 
-\- Creates fact and dimension tables
+---
 
-\- Stores data in an S3 data lake
-
-\- Uses Apache Airflow for orchestration
-
-\- Uses AWS Glue (Spark) for ETL jobs
-
-\- Uses Athena for querying
-
-\- Uses Power BI for visualization and analytics
-
-
-
-\---
-
-
-
-\## Architecture
-
-
+## Architecture Overview
 
 Pipeline flow:
 
+Raw Data → S3 Raw Zone → Glue ETL → Staging Layer → Warehouse Layer → Athena → Power BI
 
-
-Raw Data → S3 Raw Zone → AWS Glue ETL → S3 Staging → Warehouse Layer → Athena → Power BI
-
-
-
-\---
-
-
-
-\## Tech Stack
-
-
-
-\- Python
-
-\- Apache Airflow
-
-\- AWS Glue
-
-\- Apache Spark
-
-\- Amazon S3
-
-\- AWS Athena
-
-\- AWS Glue Data Catalog
-
-\- Power BI
-
-\- SQL
-
-
-
-\---
-
-
-
-\## S3 Data Lake Structure
-
-
+S3 Bucket Structure:
 
 ```text
-
 youtube-etl-project/
 
-│
-
 ├── raw/
-
 │   ├── videos/
-
 │   └── categories/
-
 │
-
 ├── staging/
-
-│   └── videos/
-
+│   ├── videos/
 │
-
 ├── warehouse/
-
-│   ├── fact\_trending\_videos/
-
-│   └── dim\_category/
-
+│   ├── fact_trending_videos/
+│   └── dim_category/
 │
-
 ├── metadata/
-
 │
-
 └── athena-results/
-
 ```
 
+---
 
+## Airflow Workflow
 
-\## Airflow Pipeline
-
-
+The pipeline uses Apache Airflow DAG orchestration running on a virtual machine.
 
 Pipeline tasks:
 
+1. Detect new files
+2. Clean video data
+3. Build category dimension
+4. Build fact table
+5. Save processed files metadata
 
+Workflow screenshot:
 
-1\. Detect new files
+![Airflow DAG](screenshots/airflow-dag.png)
 
-2\. Clean video data
+---
 
-3\. Build category dimension
+## Incremental Processing Logic
 
-4\. Build fact table
+A major focus of this project was avoiding full reprocessing.
 
-5\. Save processed files
+Instead of running ETL jobs on all files every time:
 
+* The pipeline detects newly arrived files automatically
+* Previously processed files are tracked
+* Only newly detected files are processed
 
+This significantly improves efficiency and reduces unnecessary computation.
 
-DAG workflow:
+---
 
+## File Detection Using ETag
 
+The project uses Amazon S3 ETag values for file identification.
 
-!\[Airflow DAG](screenshots/airflow-dag.png)
+The pipeline stores processed file information inside a metadata file.
 
+Processing behavior:
 
+### Case 1 — No new file arrives
 
-\---
+If Airflow runs and no new file is detected:
 
+* ETL jobs are skipped automatically
+* No resources are wasted
+* No unnecessary Glue execution occurs
 
+### Case 2 — New file arrives
 
-\## AWS Glue Jobs
+If a completely new file arrives:
 
+* File ETag is compared against processed files
+* Only that new file is processed
+* Existing files remain untouched
 
+### Case 3 — Same filename but updated content
 
-The project contains three Glue ETL jobs:
+If a file arrives with the same name but different content:
 
+* S3 generates a different ETag
+* Pipeline recognizes it as a changed file
+* Only the updated file is processed
 
+---
 
-\### clean\_videos\_job
+## Duplicate Prevention Strategy
 
+The pipeline was designed to avoid duplicate records inside the warehouse fact table.
 
+When updated files are processed:
 
-\- Reads raw CSV files
+* Existing records for that country are compared against incoming records
+* Only new rows are appended
+* Previously loaded records remain unchanged
 
-\- Cleans invalid values
+This guarantees:
 
-\- Converts data types
+* No duplicate records
+* Clean fact tables
+* Consistent analytics results
 
-\- Saves parquet output
+---
 
+## Scalability Benefits
 
+This approach makes the architecture scalable because:
 
-\### build\_category\_dimension
+* ETL processing grows only with new data
+* Full historical data is not repeatedly processed
+* Processing costs remain lower
+* Pipeline execution time remains efficient
+* Future countries and datasets can be added with minimal changes
 
+---
 
+## AWS Glue ETL Jobs
 
-\- Processes category JSON files
+### clean_videos_job
 
-\- Creates dimension table
+Responsibilities:
 
+* Read raw CSV files
+* Validate data
+* Clean records
+* Convert data types
+* Store transformed parquet data
 
+---
 
-\### build\_fact\_trending
+### build_category_dimension
 
+Responsibilities:
 
+* Read category JSON files
+* Create category dimension table
 
-\- Builds fact table
+---
 
-\- Creates calculated metrics:
+### build_fact_trending
 
+Responsibilities:
 
+* Build fact table
 
-&#x20;   - engagement\_rate
+* Create calculated metrics:
 
-&#x20;   - like\_ratio
+* engagement_rate
 
-&#x20;   - trending\_days
+* like_ratio
 
+* trending_days
 
+---
 
-\---
+## Athena Analytics
 
+Business questions answered:
 
+* Top channels by deduplicated views
+* Trending duration by category
+* Duplicate detection validation
+* Country level analysis
+* Video engagement analysis
 
-\## Athena Analytics Queries
+Example query results are available in the screenshots folder.
 
+---
 
+## Power BI Dashboard
 
-Example business questions:
+Dashboard includes:
 
+* Trending analysis
+* Country comparisons
+* Category performance
+* Engagement metrics
+* Channel analysis
+* Video performance KPIs
 
+Power BI dashboard file can be downloaded from Releases.
 
-\### Top channels by deduplicated views in 2023
+---
 
+## Dataset
 
+Dataset excluded from repository due to file size.
 
-```sql
+Download:
 
-WITH latest\_video\_views AS (
+https://www.kaggle.com/datasets/datasnaek/youtube-new
 
-&#x20;   SELECT
-
-&#x20;       video\_id,
-
-&#x20;       channelTitle,
-
-&#x20;       MAX(view\_count) AS final\_views
-
-&#x20;   FROM fact\_trending\_videos
-
-&#x20;   WHERE trending\_year = 2023
-
-&#x20;   GROUP BY
-
-&#x20;       video\_id,
-
-&#x20;       channelTitle
-
-)
-
-
-
-SELECT
-
-&#x20;   channelTitle,
-
-&#x20;   SUM(final\_views) AS total\_views,
-
-&#x20;   COUNT(video\_id) AS unique\_videos
-
-FROM latest\_video\_views
-
-GROUP BY channelTitle
-
-ORDER BY total\_views DESC
-
-LIMIT 10;
-
-```
-
-
-
-Result:
-
-
-
-!\[Athena Result](screenshots/query result.png)
-
-
-
-\---
-
-
-
-\## Dashboard
-
-
-
-Power BI dashboard includes:
-
-
-
-\- Views by category
-
-\- Trending duration analysis
-
-\- Country comparison
-
-\- Engagement metrics
-
-\- Channel performance
-
-\- Trending videos analysis
-
-
-
-Dashboard screenshots available in:
-
-
+Place files inside:
 
 ```text
-
-screenshots/
-
-```
-
-
-
-Power BI dashboard download:
-
-
-
-See Releases section.
-
-
-
-\---
-
-
-
-\## Dataset
-
-
-
-Dataset is excluded from GitHub because of file size.
-
-
-
-Download dataset from Kaggle:
-
-
-
-https://www.kaggle.com/datasets/rsrishav/youtube-trending-video-dataset
-
-
-
-Place files in:
-
-
-
-```text
-
 data/raw/
-
 ```
 
+---
 
+## Author
 
-Expected structure:
-
-
-
-```text
-
-data/raw/
-
-├── US\_youtube\_trending\_data.csv
-
-├── CA\_youtube\_trending\_data.csv
-
-├── FR\_youtube\_trending\_data.csv
-
-├── MX\_youtube\_trending\_data.csv
-
-├── US\_category\_id.json
-
-├── CA\_category\_id.json
-
-├── FR\_category\_id.json
-
-└── MX\_category\_id.json
-
-```
-
-
-
-\---
-
-
-
-\## Setup
-
-
-
-Clone repository:
-
-
-
-```bash
-
-git clone https://github.com/kimyaaaaa/youtube-aws-etl-pipeline.git
-
-```
-
-
-
-Install dependencies:
-
-
-
-```bash
-
-pip install -r requirements.txt
-
-```
-
-
-
-Run Airflow:
-
-
-
-```bash
-
-airflow standalone
-
-```
-
-
-
-\---
-
+Kamal Nafea
