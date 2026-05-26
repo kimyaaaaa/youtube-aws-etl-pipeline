@@ -31,12 +31,3 @@ data/
 ├── raw/
 
 
-
-└── processed/
-
-
-
-The ETL pipeline automatically generates processed outputs.
-
-
-
