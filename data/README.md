@@ -11,6 +11,7 @@ To reproduce this project:
 
 
 1\. Download the YouTube Trending dataset from Kaggle
+https://www.kaggle.com/datasets/rsrishav/youtube-trending-video-dataset
 
 2\. Follow the instructions in:
 
