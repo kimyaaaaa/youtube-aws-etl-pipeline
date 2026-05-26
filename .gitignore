@@ -1,0 +1,15 @@
+venv/
+.env
+__pycache__/
+*.pyc
+airflow.db
+logs/
+.aws/
+*.tmp
+.DS_Store
+
+data/raw/*
+data/processed/*
+!data/README.md
+*.parquet
+*.pbix
