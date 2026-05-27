@@ -45,6 +45,10 @@ The objective of this project is to build a scalable data pipeline that can:
 
 ---
 
+## Architecture Diagram
+
+![Architecture](architecture/architecture-diagram.png)
+
 ## Architecture Overview
 
 Pipeline flow:
