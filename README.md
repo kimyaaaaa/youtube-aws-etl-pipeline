@@ -88,11 +88,11 @@ Pipeline tasks:
 
 Successful workflow execution:
 
-![Airflow Success](screenshots/airflow dag.png)
+![Airflow Success](screenshots/airflow-dag.png)
 
 Skipped workflow when no new files are detected:
 
-![Airflow Skip](screenshots/airflow skipped dag.png)
+![Airflow Skip](screenshots/airflow-skipped-dag.png)
 
 ---
 
