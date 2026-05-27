@@ -271,7 +271,8 @@ Dashboard includes:
 * Channel analysis
 * Video performance KPIs
 
-Power BI dashboard file can be downloaded from Releases.
+Power BI dashboard file can be downloaded from Google drive (due to github size restrictions)
+https://drive.google.com/file/d/1W4e12kv5XtN9jMiCXsCC2jjWD35CG-2d/view?usp=sharing
 
 ---
 
