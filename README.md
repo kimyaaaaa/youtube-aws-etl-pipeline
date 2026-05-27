@@ -282,7 +282,7 @@ Dataset excluded from repository due to file size.
 
 Download:
 
-https://www.kaggle.com/datasets/datasnaek/youtube-new
+https://www.kaggle.com/datasets/rsrishav/youtube-trending-video-dataset
 
 Place files inside:
 
