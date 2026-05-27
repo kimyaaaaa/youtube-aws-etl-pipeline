@@ -86,9 +86,13 @@ Pipeline tasks:
 4. Build fact table
 5. Save processed files metadata
 
-Workflow screenshot:
+Successful workflow execution:
 
-![Airflow DAG](screenshots/airflow-dag.png)
+![Airflow Success](screenshots/airflow dag.png)
+
+Skipped workflow when no new files are detected:
+
+![Airflow Skip](screenshots/airflow skipped dag.png)
 
 ---
 
@@ -132,11 +136,44 @@ If a completely new file arrives:
 
 ### Case 3 — Same filename but updated content
 
-If a file arrives with the same name but different content:
+If a file arrives with the same filename but updated content:
 
-* S3 generates a different ETag
-* Pipeline recognizes it as a changed file
-* Only the updated file is processed
+* Amazon S3 generates a new ETag value
+* The pipeline identifies the file as modified
+* The updated file is sent for processing
+
+However, the pipeline does **not** blindly append the entire file into the warehouse.
+
+Before loading data:
+
+* Incoming records are compared against existing records in the fact table for the same country
+* Previously processed rows are identified
+* Only genuinely new rows are appended
+* Existing records remain unchanged
+
+This ensures:
+
+* No duplicate records are inserted
+* Historical data remains consistent
+* Reprocessing costs are minimized
+* Only incremental changes are loaded into the warehouse
+
+Example:
+
+Suppose `US_youtube_trending_data.csv` already exists and contains 10,000 records.
+
+Later, another file arrives with the same filename but a different ETag and now contains:
+
+* 10,000 existing rows
+* 500 newly added rows
+
+The pipeline will not load all 10,500 rows again.
+
+Instead:
+
+* Existing 10,000 records are ignored
+* Only the additional 500 new records are appended to the fact table
+
 
 ---
 
